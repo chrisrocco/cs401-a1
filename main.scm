@@ -1,55 +1,59 @@
-;;============================================
-;; Constants
-;;============================================
 
-(define input `(+ 2 (+ 10 8)))
-
-(define rules `())
+(define input `(+ (+ 8 (+ 1 1)) (+ x 10)))
 
 
 ;;============================================
-;; Rewrite Procedures
+;; PATTERN MATCHING
 ;;============================================
 
-;; loops over list of rules, returning the result of the first one that matches
-(define rewriteRecursive
-    (lambda (rule node)
-        (cond ((null? rule) nil)) ;; if there are no more rules, stop
-            (else (cond (not (null? (rule node))) (rule node)   ;; if the current rule matches, return it
-                (else (rewriteRecursive cdr(rule) node))    ;; recurse on the next rule
-    )
+(define (is-plus? node) (equal? node `+))
+(define (is-num? node) (number? node))
+(define (is-sum? node)
+    (and (pair? node) (equal? (car node) `+)))
+(define (is-product node)
+    (and (pair? node) (equal? (car node) `*)))
+(define (is-difference node)
+    (and (pair? node) (equal? (car node) `-)))
+(define (is-operation node)
+    (or (is-sum? node) (is-product node) (is-difference node)))
+(define (add-num-num? op lft_term rgt_term)
+    (and (is-plus? op) (is-num? lft_term) (is-num? rgt_term)))
+(define (add-term-num? op lft_term rgt_term)
+    (and (is-plus? op) (is-num? rgt_term)))
+
+
+
+;;============================================
+;; TERM RE-WRITING
+;; re-writes node by matching rules
+;;============================================
+
+(define (applyRewriteRules op lft_term rgt_term)
+  (cond
+    ((add-num-num? op lft_term rgt_term)
+        (+ lft_term rgt_term))
+    ((add-term-num? op lft_term rgt_term)
+        (rewriteNode (list `+ rgt_term lft_term)))
+    (else (list op lft_term rgt_term))
+  )
 )
 
-;; wrapper for recursive function
-(define (applyRewriteRules node) (
-  (rewriteRecursive car(rules) node)
-))
-
 
 
 ;;============================================
-;; AST Walk
-;;============================================
-
+;; AST WALK
 ;; traverses the AST in post-order, applying rewrite rules at each node.
+;;============================================
+
 (display " \n")
 (define (rewriteNode node)
-  (if (not (pair? node))
-    ;; if it is an atom, just return it
+  (if (is-operation node)
+    (applyRewriteRules (car node)
+        (rewriteNode (cadr node))
+        (rewriteNode (caddr node)))
     node
-    ;; else, evaluate the terms
-    (let ((operationTerm (car node))
-        (leftTerm (rewriteNode (cadr node)))
-        (rightTerm (rewriteNode (caddr node)))
-      )
-      ;; apply the re-write rules
-      (display operationTerm) (display " ")
-      (display leftTerm) (display " ")
-      (display rightTerm) (display " ")
-      ;; return the result
-      applyRewriteRules node
-    )
-  ))
+  )
+)
 
 ;; (trace rewriteNode)
-(rewriteNode input)
+(display (rewriteNode input))
