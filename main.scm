@@ -24,7 +24,7 @@
 
 (display " \n")
 (define (rewriteNode node)
-  (if (is-operation node)
+  (if (is-operation? node)
     (applyRewriteRules
         (car node)
         (rewriteNode (cadr node))

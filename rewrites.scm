@@ -1,13 +1,16 @@
-(define (applyRewriteRules op lft_term rgt_term)
+(define (applyRewriteRules op lft rgt)
   (cond
 
-    ((add-num-num? op lft_term rgt_term)
-        (+ lft_term rgt_term))
+    ((add-num-num? op lft rgt)
+        (+ lft rgt))
 
-    ((add-term-num? op lft_term rgt_term)
-        (rewriteNode (list `+ rgt_term lft_term)))
+    ((add-term-num? op lft rgt)
+        (rewriteNode (list `+ rgt lft)))
 
-    ((sub-term-num? op lft_term rgt_term)
-        (rewriteNode (list `+ (* rgt_term -1) lft_term)))
+    ((sub-term-num? op lft rgt)
+        (rewriteNode (list `+ (* rgt -1) lft)))
 
-    (else (list op lft_term rgt_term))))
+    ((add-term-addterm? op lft rgt)
+        (rewriteNode (list op rgt lft)))
+
+    (else (list op lft rgt))))
